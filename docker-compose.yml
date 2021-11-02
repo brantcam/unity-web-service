@@ -1,0 +1,13 @@
+# for local development #
+version: "2.0"
+services:
+  db:
+    image: "postgres:14.0"
+    container_name: "pg"
+    restart: always
+    environment:
+      - POSTGRES_USER=$DB_USER
+      - POSTGRES_PASSWORD=$DB_PASS
+      - POSTGRES_DB=$DB_NAME
+    ports:
+      - "$DB_PORT:5432"
