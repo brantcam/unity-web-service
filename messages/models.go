@@ -7,10 +7,19 @@ type Repo interface {
 	UpsertMessage(context.Context, *Message) (*Message, error)
 }
 
+type MessageRequest struct {
+	Ts         *string            `json:"ts"`
+	Sender     *string            `json:"sender"`
+	Msg        map[string]string `json:"message"`
+	SentFromIP *string            `json:"sent-from-ip"`
+	Priority   int               `json:"priority"`
+}
+
 type Message struct {
-	Ts         string            `json:"ts,omitempty"`
-	Sender     string            `json:"sender,omitempty"`
-	Msg        map[string]string `json:"message,omitempty"`
-	SentFromIP string            `json:"sent-from-ip,omitempty"`
-	Priority   int               `json:"priority,omitempty"`
+	Timestamp int
+	Sender string
+	Msg []byte
+	SentFromIP string
+	Priority int
+
 }
