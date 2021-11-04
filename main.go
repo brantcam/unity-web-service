@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/unity-web-service/messages"
+	"github.com/unity-web-service/queue"
 	"github.com/unity-web-service/router"
 	"github.com/unity-web-service/store/postgres"
 )
@@ -25,6 +26,13 @@ func main() {
 	options := router.Options{
 		PgClient: db,
 		Messages: messages.New(db),
+		Publisher: &queue.Publisher{
+			Host:  "localhost",
+			Port:  "5672",
+			User:  "guest",
+			Pass:  "guest",
+			Queue: "outgoing",
+		},
 	}
 
 	s := http.Server{
