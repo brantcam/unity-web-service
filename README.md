@@ -21,7 +21,7 @@
 ```
 
 ## some considerations
-This k8s deployment is being shipped with a bootstrapped postresql server, ideally this would be managed by a cloud provider. Therefore, for the sake of this project and testing when using a sql client locally you will need to port-forward to the sql server.
+This k8s deployment is being shipped with a bootstrapped postresql server with a volume mount of an empty directory, ideally this would be managed by a cloud provider. For the sake of this project and testing when using a sql client locally you will need to port-forward to the sql server.
 ```
  $ kubectl port-forward deploy/unity-web-service 5432:5432
 ```

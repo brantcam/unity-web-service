@@ -32,3 +32,15 @@ func (m *MessageOps) InsertMessage(ctx context.Context, data *Message) error {
 
 	return tx.Commit()
 }
+
+func (m *MessageOps) UpdateMessage(ctx context.Context, ts int, sender string) error {
+	return nil
+}
+
+func (m *MessageOps) GetMessage(ctx context.Context, ts int, sender string) (*Message, error) {
+	return nil, nil
+}
+
+func (m *MessageOps) GetUnqueuedMessages(ctx context.Context) ([]*Message, error) {
+	return nil, nil
+}

@@ -13,13 +13,27 @@ import (
 	"github.com/unity-web-service/messages"
 )
 
-func InsertMessage(m messages.Repo) http.HandlerFunc {
-	var message messages.MessageRequest
+var (
+	ERR_INTERNAL = errors.New("internal server error: couldn't unmarshal request into map")
+)
 
+func InsertMessage(m messages.Repo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var message messages.MessageRequest
+
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		if err := checkRequestKeys(b); err != nil {
+			if err == ERR_INTERNAL {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(err.Error()))
+				return
+			}
+			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
@@ -46,10 +60,10 @@ func InsertMessage(m messages.Repo) http.HandlerFunc {
 			return
 		}
 
-		//todo: send to db and nats here
-
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(fmt.Sprintf("%v", messageToSendToDBAndQ)))
+		w.Write([]byte("message added"))
+
+		// todo: send to message queue here
 	}
 }
 
@@ -96,4 +110,30 @@ func convertType(m messages.MessageRequest) (*messages.Message, error) {
 	messageToSendToDBAndQ.SentFromIP = *m.SentFromIP
 
 	return &messageToSendToDBAndQ, nil
+}
+
+// this helper is going to check the keys on the request
+// and error if there is a key that isn't supposed to be
+//on the request and return nil if the keys are correct
+func checkRequestKeys(b []byte) error {
+	requestKeyMap := make(map[string]interface{})
+	validKeys := []string{"ts", "sender", "sent-from-ip", "message", "priority"}
+
+	if err := json.Unmarshal(b, &requestKeyMap); err != nil {
+		return ERR_INTERNAL
+	}
+
+	for _, k := range validKeys {
+		delete(requestKeyMap, k)
+	}
+
+	if len(requestKeyMap) > 0 {
+		keys := make([]string, 0)
+		for k, _ := range requestKeyMap {
+			keys = append(keys, k)
+		}
+		return fmt.Errorf("invalid keys in request, please remove them: %v", keys)
+	}
+
+	return nil
 }

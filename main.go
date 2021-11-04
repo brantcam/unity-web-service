@@ -34,5 +34,6 @@ func main() {
 		Handler:      router.New(options),
 	}
 
+	log.Printf("accepting connections on %s", s.Addr)
 	log.Fatal(s.ListenAndServe())
 }

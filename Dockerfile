@@ -13,6 +13,7 @@ RUN go mod tidy && go build -o unity-ws
 FROM alpine:3.14
 
 COPY --from=ws_build /unity-web-service/unity-ws .
+COPY --from=ws_build /unity-web-service/store/postgres/queries.sql ./store/postgres/queries.sql
 
 EXPOSE 8080
 
