@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,7 +13,7 @@ import (
 	"github.com/unity-web-service/messages"
 )
 
-func UpsertMessage(m messages.Repo) http.HandlerFunc {
+func InsertMessage(m messages.Repo) http.HandlerFunc {
 	var message messages.MessageRequest
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -46,6 +47,7 @@ func UpsertMessage(m messages.Repo) http.HandlerFunc {
 	}
 }
 
+// if priority isn't set, it will default to 0
 func validatemessagereq(m messages.MessageRequest) error {
 	if m.Sender == nil || len(*m.Sender) == 0 {
 		return errors.New("please add a sender")
@@ -81,7 +83,7 @@ func convertType(m messages.MessageRequest) (*messages.Message, error) {
 		return nil, errors.New("unable to convert timestamp to int")
 	}
 
-	messageToSendToDBAndQ.Msg = b
+	messageToSendToDBAndQ.Msg = hex.EncodeToString(b)
 	messageToSendToDBAndQ.Timestamp = i
 	messageToSendToDBAndQ.Priority = m.Priority
 	messageToSendToDBAndQ.Sender = *m.Sender

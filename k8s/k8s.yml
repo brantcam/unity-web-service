@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unity-web-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: unity-web-service
+  template:
+    metadata:
+      labels:
+        app: unity-web-service
+    spec:
+      containers:
+      - name: router
+        image: brantcam/unity-web-service:latest
+        imagePullPolicy: IfNotPresent
+        #todo: move some of these to k8s secrets and add readiness/liveness probes
+        env:
+          - name: DB_HOST
+            value: localhost
+          - name: DB_USER
+            value: unity_user
+          - name: DB_PASS
+            value: unity_pass
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_NAME
+            value: unity_db
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8080
+      - name: pg
+        image: postgres:14.0
+        env:
+          - name: POSTGRES_USER
+            value: unity_user
+          - name: POSTGRES_PASSWORD
+            value: unity_pass
+          - name: POSTGRES_DB
+            value: unity_db
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 5432
+      - name: queue
+        image: nats-streaming:0.23.0-alpine3.14
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 4222

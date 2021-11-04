@@ -14,4 +14,6 @@ FROM alpine:3.14
 
 COPY --from=ws_build /unity-web-service/unity-ws .
 
+EXPOSE 8080
+
 CMD ["./unity-ws"]
