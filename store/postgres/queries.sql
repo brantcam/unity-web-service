@@ -1,3 +1,4 @@
+-- name: create-messsages-table
 CREATE TABLE messages (
 	timestamp INTEGER,
 	priority INTEGER,
@@ -8,5 +9,5 @@ CREATE TABLE messages (
 );
 
 -- name: insert-message
-INSERT INTO messages (ts, p, sdr, ip, msg) VALUES
+INSERT INTO messages (timestamp, priority, sender, ip, message) VALUES
     ($1, $2, $3, $4, $5);

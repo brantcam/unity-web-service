@@ -4,7 +4,7 @@ import "context"
 
 // Repo is responsible for all data transactions for messages
 type Repo interface {
-	InsertMessage(context.Context, *Message) (*Message, error)
+	InsertMessage(context.Context, *Message) error
 }
 
 type MessageRequest struct {

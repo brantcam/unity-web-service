@@ -40,6 +40,12 @@ func InsertMessage(m messages.Repo) http.HandlerFunc {
 			return
 		}
 
+		if err := m.InsertMessage(r.Context(), messageToSendToDBAndQ); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
 		//todo: send to db and nats here
 
 		w.WriteHeader(http.StatusOK)

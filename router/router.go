@@ -19,7 +19,7 @@ func New(opts Options) *mux.Router {
 	// r.Methods(http.MethodGet).Path("/natshealth").Handler(handlers.Health(opts.NatsClient))
 
 	v1 := r.PathPrefix("/api/v1").Subrouter()
-	v1.Methods(http.MethodPost).Path("/message").Handler(handlers.UpsertMessage(opts.Messages))
+	v1.Methods(http.MethodPost).Path("/message").Handler(handlers.InsertMessage(opts.Messages))
 
 	return r
 }
