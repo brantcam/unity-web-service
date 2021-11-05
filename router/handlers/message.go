@@ -102,6 +102,10 @@ func convertType(m messages.MessageRequest) (*messages.Message, error) {
 		return nil, errors.New("unable to convert timestamp to int")
 	}
 
+	// encoding the message as a string since the project didn't specify that these messages would need to be accessed in any way
+	// if they did need to be accessed, I would create a table for messages and one for users and relate them with a foreign key
+	// converting to a string for storage
+	// the subscriber should decode with the hex.DecodeString(s string) ([]byte, error) method
 	messageToSendToDBAndQ.Msg = hex.EncodeToString(b)
 	messageToSendToDBAndQ.Timestamp = i
 	messageToSendToDBAndQ.Priority = m.Priority
