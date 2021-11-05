@@ -11,3 +11,10 @@ services:
       - POSTGRES_DB=$DB_NAME
     ports:
       - "$DB_PORT:5432"
+  queue:
+    image: "brantcam/rabbit-mq:v1"
+    container_name: "queue"
+    # hostname: "rabbit-store"
+    restart: always
+    ports:
+      - "5672:5672"

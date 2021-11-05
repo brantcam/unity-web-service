@@ -1,0 +1,160 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unity-web-service
+spec:
+  selector:
+    matchLabels:
+      app: unity-web-service
+  template:
+    metadata:
+      labels:
+        app: unity-web-service
+    spec:
+      containers:
+      - name: router
+        image: brantcam/unity-web-service:{VERSION}
+        imagePullPolicy: IfNotPresent
+        # ideally these would be stored as k8s secrets or in some kind of secure key store
+        env:
+          - name: DB_HOST
+            value: unity-service
+          - name: DB_USER
+            value: unity_user
+          - name: DB_PASS
+            value: unity_pass
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_NAME
+            value: unity_db
+          - name: MQ_HOST
+            value: localhost
+          - name: MQ_USER
+            value: guest
+          - name: MQ_PASS
+            value: guest
+          - name: MQ_PORT
+            value: "5672"
+          - name: MQ_NAME
+            value: outgoing
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /dbhealth
+            port: 8080
+          initialDelaySeconds: 20
+          timeoutSeconds: 2
+        livenessProbe:
+          httpGet:
+            path: /dbhealth
+            port: 8080
+          initialDelaySeconds: 20
+          timeoutSeconds: 2
+      - name: queue
+        image: brantcam/rabbit-mq:v2
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        ports:
+        - containerPort: 5672
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unity-pg
+spec:
+  selector:
+    matchLabels:
+      app: unity-web-service
+  template:
+    metadata:
+      labels:
+        app: unity-web-service
+    spec:
+      containers:
+      - name: pg
+        image: postgres:14.0
+        volumeMounts:
+        - mountPath: /var/lib/postgres/data
+          name: postgres-db
+        # same for these
+        env:
+          - name: POSTGRES_USER
+            value: unity_user
+          - name: POSTGRES_PASSWORD
+            value: unity_pass
+          - name: POSTGRES_DB
+            value: unity_db
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        readinessProbe:
+          exec:
+            command: ["psql", "-w", "-U", "unity_user", "-d", "unity_db", "-c", "SELECT 1"]
+          initialDelaySeconds: 15
+          timeoutSeconds: 2
+        livenessProbe:
+          exec:
+            command: ["psql", "-w", "-U", "unity_user", "-d", "unity_db", "-c", "SELECT 1"]
+          initialDelaySeconds: 45
+          timeoutSeconds: 2
+        ports:
+        - containerPort: 5432
+      volumes:
+      - name: postgres-db
+        emptyDir: {}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: unity-service
+spec:
+  selector:
+    app: unity-web-service
+  ports:
+  - name: router
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+  - name: pg
+    protocol: TCP
+    port: 5432
+    targetPort: 5432
+  - name: queue
+    protocol: TCP
+    port: 5672
+    targetPort: 5672
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  labels:
+    name: api-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: localhost
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: unity-service
+            port: 
+              number: 8080
+

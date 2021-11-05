@@ -14,9 +14,10 @@ type Publisher struct {
 	Pass  string
 	Queue string
 
-	Retry int
+	Retry        int
 	RetryBackoff time.Duration
 }
+
 // Publish will send messages to the Queue and retry if an error occurs
 func (p *Publisher) Publish(m []byte) error {
 	conn, err := amqp.Dial(fmt.Sprintf(
@@ -37,12 +38,12 @@ func (p *Publisher) Publish(m []byte) error {
 	}
 	defer ch.Close()
 
-	q, err := ch.QueueDeclare(p.Queue, false, false, false, false, nil)
+	q, err := ch.QueueDeclare(p.Queue, true, false, false, false, nil)
 	if err != nil {
 		return err
 	}
 
-	for i := 0; i <= p.Retry; i ++ {
+	for i := 0; i <= p.Retry; i++ {
 		if err = ch.Publish("", q.Name, false, false, amqp.Publishing{
 			ContentType: "application/json",
 			Body:        m,
