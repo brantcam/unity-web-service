@@ -20,13 +20,20 @@ type Publisher struct {
 
 // Publish will send messages to the Queue and retry if an error occurs
 func (p *Publisher) Publish(m []byte) error {
-	conn, err := amqp.Dial(fmt.Sprintf(
-		`amqp://%s:%s@%s:%s/`,
-		p.User,
-		p.Pass,
-		p.Host,
-		p.Port),
-	)
+	var conn *amqp.Connection
+	var err error
+	for i := 0; i < p.Retry; i++ {
+		if conn, err = amqp.Dial(fmt.Sprintf(
+			`amqp://%s:%s@%s:%s/`,
+			p.User,
+			p.Pass,
+			p.Host,
+			p.Port),
+		); err == nil {
+			break
+		}
+		time.Sleep(p.RetryBackoff)
+	}
 	if err != nil {
 		return err
 	}
@@ -43,7 +50,7 @@ func (p *Publisher) Publish(m []byte) error {
 		return err
 	}
 
-	for i := 0; i <= p.Retry; i++ {
+	for i := 0; i < p.Retry; i++ {
 		if err = ch.Publish("", q.Name, false, false, amqp.Publishing{
 			ContentType: "application/json",
 			Body:        m,

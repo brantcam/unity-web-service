@@ -28,7 +28,7 @@ spec:
           - name: DB_NAME
             value: unity_db
           - name: MQ_HOST
-            value: localhost
+            value: unity-service
           - name: MQ_USER
             value: guest
           - name: MQ_PASS
@@ -39,8 +39,8 @@ spec:
             value: outgoing
         resources:
           limits:
-            memory: "128Mi"
-            cpu: "500m"
+            memory: "1Gi"
+            cpu: "1000m"
         ports:
         - containerPort: 8080
         readinessProbe:
@@ -55,14 +55,6 @@ spec:
             port: 8080
           initialDelaySeconds: 20
           timeoutSeconds: 2
-      - name: queue
-        image: brantcam/rabbit-mq:v2
-        resources:
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
-        ports:
-        - containerPort: 5672
 
 ---
 apiVersion: apps/v1
@@ -94,8 +86,8 @@ spec:
             value: unity_db
         resources:
           limits:
-            memory: "1Gi"
-            cpu: "500m"
+            memory: "2Gi"
+            cpu: "1000m"
         readinessProbe:
           exec:
             command: ["psql", "-w", "-U", "unity_user", "-d", "unity_db", "-c", "SELECT 1"]
@@ -111,6 +103,32 @@ spec:
       volumes:
       - name: postgres-db
         emptyDir: {}
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unity-queue
+spec:
+  selector:
+    matchLabels:
+      app: unity-web-service
+  template:
+    metadata:
+      labels:
+        app: unity-web-service
+    spec:
+      containers:
+      - name: queue
+        image: brantcam/rabbit-mq:v2
+        resources:
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        ports:
+        - containerPort: 5672
+
 
 ---
 
