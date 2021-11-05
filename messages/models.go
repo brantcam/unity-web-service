@@ -4,7 +4,8 @@ import "context"
 
 // Repo is responsible for all data transactions for messages
 type Repo interface {
-	InsertMessage(context.Context, *Message) error
+	UpsertMessage(context.Context, *Message) error
+	GetAllUnqueuedMessages(ctx context.Context) ([]*Message, error)
 }
 
 type MessageRequest struct {
@@ -21,4 +22,5 @@ type Message struct {
 	Sender     string
 	SentFromIP string
 	Msg        string
+	Queued     bool
 }

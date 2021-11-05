@@ -18,7 +18,7 @@ var (
 	ERR_INTERNAL = errors.New("internal server error: couldn't unmarshal request into map")
 )
 
-func InsertMessage(m messages.Repo, p queue.IPublisher) http.HandlerFunc {
+func UpsertMessage(m messages.Repo, p queue.IPublisher) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var message messages.MessageRequest
 
@@ -55,15 +55,10 @@ func InsertMessage(m messages.Repo, p queue.IPublisher) http.HandlerFunc {
 			return
 		}
 
-		if err := m.InsertMessage(r.Context(), messageToSendToDBAndQ); err != nil {
+		if err := m.UpsertMessage(r.Context(), messageToSendToDBAndQ); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
-		}
-
-		if err := p.Publish(b); err != nil {
-			w.WriteHeader(http.StatusTeapot)
-			w.Write([]byte(fmt.Sprintf("message was not queued: %v\n", err.Error())))
 		}
 
 		w.WriteHeader(http.StatusOK)

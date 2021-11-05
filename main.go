@@ -33,18 +33,21 @@ func main() {
 		log.Print("db migration unsuccessful")
 	}
 
+	mOps := messages.New(db)
+	pub := &queue.Publisher{
+		Host:  mqConfig.Host,
+		Port:  strconv.Itoa(int(mqConfig.Port)),
+		User:  mqConfig.Username,
+		Pass:  mqConfig.Password,
+		Queue: mqConfig.Name,
+		Retry: 3,
+		RetryBackoff: 5 * time.Second,
+	}
+
 	options := router.Options{
 		PgClient: db,
-		Messages: messages.New(db),
-		Publisher: &queue.Publisher{
-			Host:  mqConfig.Host,
-			Port:  strconv.Itoa(int(mqConfig.Port)),
-			User:  mqConfig.Username,
-			Pass:  mqConfig.Password,
-			Queue: mqConfig.Name,
-			Retry: 3,
-			RetryBackoff: 5 * time.Second,
-		},
+		Messages: mOps,
+		Publisher: pub,
 	}
 
 	s := http.Server{
@@ -53,6 +56,8 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 		Handler:      router.New(options),
 	}
+
+	go mOps.Reconcile(context.Background(), pub)
 
 	log.Printf("accepting connections on %s", s.Addr)
 	log.Fatal(s.ListenAndServe())

@@ -9,6 +9,11 @@ CREATE TABLE IF NOT EXISTS messages (
 	PRIMARY KEY (timestamp, sender)
 );
 
--- name: insert-message
+-- name: upsert-message
 INSERT INTO messages (timestamp, priority, sender, ip, message, queued) VALUES
-    ($1, $2, $3, $4, $5, FALSE);
+    ($1, $2, $3, $4, $5, $6)
+ON CONFLICT(timestamp, sender) DO UPDATE
+	SET queued=$6;
+
+-- name: get-all-unqueued-messages
+SELECT * FROM messages WHERE queued=FALSE;
