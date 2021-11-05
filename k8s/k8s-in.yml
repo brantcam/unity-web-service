@@ -121,7 +121,7 @@ spec:
     spec:
       containers:
       - name: queue
-        image: brantcam/rabbit-mq:v2
+        image: rabbitmq:3.9.8-alpine
         resources:
           limits:
             memory: "2Gi"

@@ -12,7 +12,7 @@ services:
     ports:
       - "$DB_PORT:5432"
   queue:
-    image: "brantcam/rabbit-mq:v1"
+    image: "rabbitmq:3.9.8-alpine"
     container_name: "queue"
     # hostname: "rabbit-store"
     restart: always
