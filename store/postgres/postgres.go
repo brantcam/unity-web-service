@@ -60,8 +60,11 @@ func (c *Conn) Health(ctx context.Context) error {
 		}
 		time.Sleep(c.RetryBackoff)
 	}
+	if err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
 
 func (c *Conn) MigrateUp(ctx context.Context) error {
@@ -70,13 +73,7 @@ func (c *Conn) MigrateUp(ctx context.Context) error {
 		return err
 	}
 
-	for i := 0; i <= c.Retry; i ++ {
-		if _, err = c.Queries.ExecContext(ctx, tx, "create-messsages-table"); err == nil {
-			break
-		}
-		time.Sleep(c.RetryBackoff)
-	}
-	if err != nil {
+	if _, err := c.Queries.ExecContext(ctx, tx, "create-messsages-table"); err != nil {
 		return err
 	}
 
