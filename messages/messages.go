@@ -2,6 +2,7 @@ package messages
 
 import (
 	"context"
+	"time"
 
 	"github.com/unity-web-service/store/postgres"
 )
@@ -19,28 +20,22 @@ func (m *MessageOps) InsertMessage(ctx context.Context, data *Message) error {
 	if err != nil {
 		return err
 	}
-
-	if _, err := m.pg.Queries.ExecContext(ctx, tx, "insert-message",
-		data.Timestamp,
-		data.Priority,
-		data.Sender,
-		data.SentFromIP,
-		data.Msg,
-	); err != nil {
+	for i := 0; i <= m.pg.Retry; i++ {
+		if _, err = m.pg.Queries.ExecContext(ctx, tx, "insert-message",
+			data.Timestamp,
+			data.Priority,
+			data.Sender,
+			data.SentFromIP,
+			data.Msg,
+		); err == nil {
+			break
+		}
+		time.Sleep(m.pg.RetryBackoff)
+	}
+	// checking the err of the ExecContext
+	if err != nil {
 		return err
 	}
 
 	return tx.Commit()
-}
-
-func (m *MessageOps) UpdateMessage(ctx context.Context, ts int, sender string) error {
-	return nil
-}
-
-func (m *MessageOps) GetMessage(ctx context.Context, ts int, sender string) (*Message, error) {
-	return nil, nil
-}
-
-func (m *MessageOps) GetUnqueuedMessages(ctx context.Context) ([]*Message, error) {
-	return nil, nil
 }

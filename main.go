@@ -4,8 +4,10 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/unity-web-service/config"
 	"github.com/unity-web-service/messages"
 	"github.com/unity-web-service/queue"
 	"github.com/unity-web-service/router"
@@ -13,9 +15,13 @@ import (
 )
 
 func main() {
-	dbConfig, err := postgres.LoadConfigFromEnv()
+	dbConfig, err := config.LoadConfigFromEnv(config.CONFIG_DB)
 	if err != nil {
 		log.Fatalf("error loading postgres config: %v", err)
+	}
+	mqConfig, err := config.LoadConfigFromEnv(config.CONFIG_MQ)
+	if err != nil {
+		log.Fatalf("error loading message queue config: %v", err)
 	}
 
 	db, err := postgres.New(context.Background(), *dbConfig)
@@ -23,15 +29,21 @@ func main() {
 		log.Fatalf("error creating postgres connection: %v", err)
 	}
 
+	if err := db.MigrateUp(context.Background()); err != nil {
+		log.Print("db migration unsuccessful")
+	}
+
 	options := router.Options{
 		PgClient: db,
 		Messages: messages.New(db),
 		Publisher: &queue.Publisher{
-			Host:  "localhost",
-			Port:  "5672",
-			User:  "guest",
-			Pass:  "guest",
-			Queue: "outgoing",
+			Host:  mqConfig.Host,
+			Port:  strconv.Itoa(int(mqConfig.Port)),
+			User:  mqConfig.Username,
+			Pass:  mqConfig.Password,
+			Queue: mqConfig.Name,
+			Retry: 3,
+			RetryBackoff: 5 * time.Second,
 		},
 	}
 

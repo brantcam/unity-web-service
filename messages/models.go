@@ -5,10 +5,6 @@ import "context"
 // Repo is responsible for all data transactions for messages
 type Repo interface {
 	InsertMessage(context.Context, *Message) error
-	UpdateMessage(context.Context, int, string) error
-	
-	GetMessage(context.Context, int, string) (*Message, error)
-	GetUnqueuedMessages(context.Context) ([]*Message, error)
 }
 
 type MessageRequest struct {

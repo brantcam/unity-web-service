@@ -1,9 +1,14 @@
-package postgres
+package config
 
 import (
 	"fmt"
 	"os"
 	"strconv"
+)
+
+const (
+	CONFIG_MQ = "MQ"
+	CONFIG_DB = "DB"
 )
 
 type Config struct {
@@ -14,26 +19,28 @@ type Config struct {
 	Port     uint
 }
 
-func LoadConfigFromEnv() (*Config, error) {
+// since both the mq and postgres have similar env we are using the same load func for both
+// this needs is a type in the form of a string "DB" or "MQ"
+func LoadConfigFromEnv(t string) (*Config, error) {
 	var cfg Config
 
-	if host, ok := os.LookupEnv("DB_HOST"); ok {
+	if host, ok := os.LookupEnv(fmt.Sprintf("%s_HOST", t)); ok {
 		cfg.Host = host
 	}
 
-	if name, ok := os.LookupEnv("DB_NAME"); ok {
+	if name, ok := os.LookupEnv(fmt.Sprintf("%s_NAME", t)); ok {
 		cfg.Name = name
 	}
 
-	if username, ok := os.LookupEnv("DB_USER"); ok {
+	if username, ok := os.LookupEnv(fmt.Sprintf("%s_USER", t)); ok {
 		cfg.Username = username
 	}
 
-	if password, ok := os.LookupEnv("DB_PASS"); ok {
+	if password, ok := os.LookupEnv(fmt.Sprintf("%s_PASS", t)); ok {
 		cfg.Password = password
 	}
 
-	if port, ok := os.LookupEnv("DB_PORT"); ok {
+	if port, ok := os.LookupEnv(fmt.Sprintf("%s_PORT", t)); ok {
 		p, err := strconv.ParseUint(port, 10, 16)
 		if err != nil {
 			return nil, fmt.Errorf("invalid port value: %v", err)

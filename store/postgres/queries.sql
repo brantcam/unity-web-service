@@ -1,5 +1,5 @@
 -- name: create-messsages-table
-CREATE TABLE messages (
+CREATE TABLE IF NOT EXISTS messages (
 	timestamp INTEGER NOT NULL,
 	priority INTEGER,
 	sender VARCHAR NOT NULL,

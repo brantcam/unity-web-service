@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/qustavo/dotsql"
 	"github.com/jmoiron/sqlx"
+	"github.com/qustavo/dotsql"
+	"github.com/unity-web-service/config"
 
 	// postgres driver for the database/sql package
 	_ "github.com/lib/pq"
@@ -14,13 +15,13 @@ import (
 
 type Conn struct {
 	Queries *dotsql.DotSql
-	Client *sqlx.DB
+	Client  *sqlx.DB
 
-	retry        int
-	retryBackoff time.Duration
+	Retry        int
+	RetryBackoff time.Duration
 }
 
-func New(ctx context.Context, c Config) (*Conn, error) {
+func New(ctx context.Context, c config.Config) (*Conn, error) {
 	db, err := sqlx.Connect("postgres",
 		fmt.Sprintf(
 			"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
@@ -41,10 +42,10 @@ func New(ctx context.Context, c Config) (*Conn, error) {
 	}
 
 	conn := &Conn{
-		Queries: dot,
-		Client: db,
-		retry: 3,
-		retryBackoff: 5 * time.Second,
+		Queries:      dot,
+		Client:       db,
+		Retry:        3,
+		RetryBackoff: 5 * time.Second,
 	}
 
 	return conn, db.PingContext(ctx)
@@ -53,12 +54,31 @@ func New(ctx context.Context, c Config) (*Conn, error) {
 func (c *Conn) Health(ctx context.Context) error {
 	var err error
 
-	for i := 0; i <= c.retry; i++ {
+	for i := 0; i <= c.Retry; i++ {
 		if err = c.Client.PingContext(ctx); err == nil {
 			break
 		}
-		time.Sleep(c.retryBackoff)
+		time.Sleep(c.RetryBackoff)
 	}
 
 	return err
+}
+
+func (c *Conn) MigrateUp(ctx context.Context) error {
+	tx, err := c.Client.Begin()
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i <= c.Retry; i ++ {
+		if _, err = c.Queries.ExecContext(ctx, tx, "create-messsages-table"); err == nil {
+			break
+		}
+		time.Sleep(c.RetryBackoff)
+	}
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
