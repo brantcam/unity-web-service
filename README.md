@@ -22,7 +22,7 @@ $ ./minikube.sh
 ```
 $ ./build.sh
 ```
-this will build the docker image, push to my repo, tag the version in the k8s file, start minikube, and apply the k8s yml to the minikube cluster
+this will build the docker image, push to my repo, tag the version in the k8s file
 ### Check api readiness
 ```
  $ curl -v localhost/dbhealth
@@ -34,12 +34,6 @@ This k8s deployment is being shipped with a bootstrapped postresql server deploy
 ```
  $ kubectl port-forward deploy/unity-web-service 5432:5432
 ```
-
-in terms of rigidity, things that might make it a bit more productions ready are:
-- retries in both the sql queries and the message queueing
-- persistent volumes for both the message queue and the postgres db
-- more replicas for the api router
-
 
 # mock subscriber
 ## if you need to test the queue, you can implement a subscriber similar to this
