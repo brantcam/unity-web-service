@@ -16,23 +16,25 @@ $ go run main.go
 ```
 $ ./minikube.sh
 ```
-- you will also need to run `$ minikube tunnel` for the ingress to work properly
 
-### to build images and deploy k8s resources
+### to build images and deploy k8s resources this will build the docker image, push to my repo, tag the version in the k8s file
 ```
 $ ./build.sh
 ```
-this will build the docker image, push to my repo, tag the version in the k8s file
-### Check api readiness
-```
- $ curl -v localhost/dbhealth
-```
 
-
+### you will also need to run `$ minikube tunnel` for the ingress to work properly
+```
+$ minikube tunnel
+```
 # some production considerations
 This k8s deployment is being shipped with a bootstrapped postresql server deployment with a volume mount of an empty directory - this doesn't scale, ideally this would be managed by a cloud provider. For the sake of this project and testing when using a sql client locally you will need to port-forward to the sql server (see command below). Unfortunately, when running in a minikube/k8s cluster, this results in the api router, on startup, crashing and failing as it's trying to make a connection with the postgres server that hasn't started yet.
 ```
  $ kubectl port-forward deploy/unity-web-service 5432:5432
+```
+
+### Check api readiness
+```
+ $ curl -v localhost/dbhealth
 ```
 
 # mock subscriber
