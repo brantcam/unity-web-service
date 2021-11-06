@@ -1,0 +1,60 @@
+	1. Your team has just deployed a new build. The application starts crashing because it’s running out of memory after several hours. The team suspects a memory leak has been introduced in one of the apps dependencies. 
+	    a.	How would you help the web team diagnose and fix the problem? 
+            - checking the stack trace where the application is deployed might be helpful in understanding why this application has run out of memory
+            - example: there was an instance where our elasticsearch cluster did not have enough memory allocated to it and was crashing which resulted in our indexing service crashing as well
+                we eventually looked at the container logs for elasticsearch and saw that it was throwing an insufficient memory error and was exiting. We eventually bumped the memory of the cluster, but we
+                also added some connection retry logic to our indexer (elasticsearch client) where if ES wasn't available, instead of throwing a nil pointer error, it would try to reconnect and after a certain number of times
+                it would gracefully shutdown and output a log stating that Elasticsearch wasn't available.
+	    b.	How would you stop issues like this making its way into production?
+            - first of all, understanding why the application is crashing, and being able to reproduce the error could be a very helpful task in hardening the app for any future similar problems.
+            - this is an issue where monitoring metrics and alerting can play a big role in application stability and reliability. by monitoring downtime/uptime, fail/success, in an environment similar to,
+                but not production, could help developers understand the stability and reliability of their application and how it interacts with the rest of the resources deployed around it and how their application
+                will run in production. just setting up an elasticsearch cluster with a kibana dashboard would be a simple example of capturing metrics and displaying them in a way that is understandable.
+            - also, continuous integration and deployment pipelines are a great way to ensure that your application is being built, shipped, and deployed, the same way, every single time. cutting out
+                any outside variables that might occur from manually building and deploying
+            - ensure that the application has helpful and meaningful logging
+            - ensure that the application has methods of gracefully shutting down or retry logic
+
+
+	2. Describe some of the advantages and disadvantages of SQL and NoSQL data stores, and the general use cases you think they each fit.
+        - SQL is relational db, meaning that there are different data types that are related to each other and could mean higher query times, depending on this complexity, however there is a greater degress of organization
+        - projects where data isn't entirely too complex might be a good candidate for NoSQL
+        - projects where performace needs to be fast and highly available might be a good candidate for no sql
+        - applications where there is a need to store multiple data types and each one has a relationship to another might be a good candidate for a sql db
+        - NoSQL doesn't have relationships and could mean faster performance, but lack when it comes to relating data to each other
+        - NoSQL DBs tend to be lighter and some like cassandra, can be extremely fast in-memory DBs
+
+	3. Describe the workflows, ecosystems, and technology you would use/create to ensure the dual goals of GDPR/privacy compliance and data accessibility for business/application needs.
+        - QA and Information Risk Management departments could play a major role in GDPR compliance and data accessibility for business/application needs. IRM could approve/sign off on 
+        - certain verbiage, data collection components that are GDPR compliant and QA could check if the business/application has access to the data it needs within GDPR guidelines and restrictions, 
+            these two departments could work together to catch any verbiage or components that aren't GDPR compliant and still achieve data accessibility for the business/application needs
+        - how do I make my application gdpr compliant as a developer:
+            - data collection/processing is only allowed if permission from the user is granted.
+            - since the data the user is giving to the application is now being managed by us, it needs to be protected and encrypted
+            - 2FA can verify a person is who they really say they are
+            - since users of the application will have rights to their data, it needs to be erased on command from the user. 
+            - Options to share user data to other third party applications should be by the request of the user and should be able to withdraw/decline. 
+            - Only data that is absolutely necessary to collect should be collected, nothing more.
+
+	4. What’s your pre and post-deployment checklist for a new application, inclusive of the entire stack (assume the infra/cloud provider of your choice)?
+        Pre:
+            - does the app have a local setup where devs can iterate on features and fix bugs quickly? (docker compose makes it really easy to spin up an apps dependencies and test code locally)
+            - is the app setup with proper dev, staging, and production environments and has configurations for the respective environments?
+            - Does the App have CI/CD in place? (circleci, jenkins)
+            - is the application properly tested and acheive the set code coverage for tests? (regression, integration and unit tests)
+            - if an ingress is needed, do we have the proper endpoints and ports from the application?
+            - are we aware of the memory allocation that our application needs to run (running our app in something like docker can help diagnose issues like this)
+        Post:
+            - onboarding, how can someone validate that they are using the service correctly? (good documentation can acheive this, but also interactive documentation like swagger can help as well)
+            - is there monitoring/alerting in place and what metrics are we tracking? performance, throughput, fail/success rates, latency (elasticsearch, kibana, grafana, prometheus)
+            - are the application logs working as expected?
+            - has the application's services/APIs been very cleanly documented in a centralized place? (confluence, gh pages)
+            - oncalls, who will be supporting the service, and how can someone reach them? (pagerduty, text, call)
+
+    Part 4 - Productionize It
+        Now that you have your service, describe/implement your approach to making it ready for production at scale (100k RPS).
+            - I would have multiple replicas of this service behind a load balancer
+            - to avoid too many requests from one client, I would add some kind of throttling mechanism
+            - the postgres db would be handled by a cloud provider with a persistent data store as well as the database for the messaging queue
+            - the machine that the service is running on would have higher cpu and memory limits
+            - I have already added some retry logic throughout the codebase, but there are some cases, like the api-router to the postgres sever, where I haven't added any retry logic, I would most likely add some there
