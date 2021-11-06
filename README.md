@@ -11,7 +11,7 @@ $ go run main.go
 ```
 
 # minikube setup
-# build
+- make sure minikube is installed on your machine
 ### to start minikube
 ```
 $ ./minikube.sh
